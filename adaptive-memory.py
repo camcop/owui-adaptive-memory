@@ -217,8 +217,19 @@ class Filter:
             description="Maximum length of each injected memory snippet",
         )
 
+        # Ollama settings
+        ollama_url: str = Field(
+            default="http://host.docker.internal:11434",
+            description="Ollama URL",
+        )
+
+        ollama_model: str = Field(
+            default="gemma3:4b",
+            description="Ollama model name",
+        )
+
         # Provider selection
-        provider: Literal["OpenRouter"] = Field(
+        provider: str = Field(
             default="OpenRouter",
             description="LLM provider: OpenRouter (cloud)",
         )
@@ -654,7 +665,7 @@ Your output must be valid JSON only. No additional text.""",
 
         # Discover Ollama models
         try:
-            ollama_url = "http://host.docker.internal:11434/api/tags"
+            ollama_url = f"{self.valves.ollama_url}/api/tags"
             async with session.get(ollama_url) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -2181,7 +2192,7 @@ Current datetime: {current_datetime.strftime('%A, %B %d, %Y %H:%M:%S')} ({curren
                         model=self.valves.ollama_model,
                         system_prompt=system_prompt,
                         user_prompt=user_prompt,
-                        api_url="http://host.docker.internal:11434",
+                        api_url=self.valves.ollama_url,
                         api_key=None,
                     )
                 else:
@@ -2239,7 +2250,7 @@ Current datetime: {current_datetime.strftime('%A, %B %d, %Y %H:%M:%S')} ({curren
     ) -> str:
         """Query Ollama API"""
         session = await self._get_aiohttp_session()
-        url = "http://host.docker.internal:11434/api/chat"
+        url = f"{self.valves.ollama_url}/api/chat"
 
         # Validate model availability if we've discovered models
         if self.available_ollama_models and model not in self.available_ollama_models:
